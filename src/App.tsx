@@ -23,6 +23,11 @@ const MyTextField: React.FC<FieldAttributes<{}>> = ({ placeholder, ...props}) =>
 
 const validationSchema = yup.object({
     firstName: yup.string().required().max(10),
+    pets: yup.array().of(
+        yup.object({
+            name: yup.string().required()
+        })
+    )
  
 
 })
