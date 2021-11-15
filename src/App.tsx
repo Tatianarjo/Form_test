@@ -1,7 +1,8 @@
 import React from "react";
-import { Formik, Field, Form, useField, FieldAttributes } from "formik";
-import { Checkbox, FormControlLabel, Radio, TextField } from "@mui/material";
+import { Formik, Field, Form, useField, FieldAttributes, FieldArray  } from "formik";
+import { Checkbox, FormControlLabel, MenuItem, Radio, Select, TextField } from "@mui/material";
 import { Button }  from "@mui/material";
+import * as yup from 'yup';
 
 type MyRadioProps = { label: string } & FieldAttributes<{}>
 
@@ -12,12 +13,47 @@ const MyRadio: React.FC<MyRadioProps> = ({label, ...props}) => {
     )
 }
 
+const MyTextField: React.FC<FieldAttributes<{}>> = ({ placeholder, ...props}) => {
+    const [field, meta] = useField<{}>(props);
+    const errorText = meta.error && meta.touched ? meta.error : '';
+    return (
+        <TextField placeholder={placeholder} {...field} helperText={errorText} error={!!errorText} />
+    )
+}
+
+const validationSchema = yup.object({
+    firstName: yup.string().required().max(10),
+ 
+
+})
+
 
 const App: React.FC = () => {
     return (
         <div>
         <Formik 
-        initialValues={{ firstName: "", lastName: "", isTall: "false", cookies: [], yogurt:""}}
+        initialValues={{ 
+            firstName: "", 
+            lastName: "", 
+            isTall: "false", 
+            cookies: [], 
+            yogurt:"",
+            pets: [{ type: "cat", name: "peaches", id: "" + Math.random() }]
+        }}
+        
+        validationSchema={validationSchema}
+        //Line 44 is used with Yup; it helps with errors like: max 10 letters
+        // validate={(values) => {
+            
+        //     const errors: Record<string, string> = {};
+
+        //     if (values.firstName.includes('bob')) {
+        //         errors.firstName = 'no bob'
+        //     }
+
+        // return errors;
+        // }
+        // }
          onSubmit={(data, { setSubmitting }) => {
              setSubmitting(true);
              //make async call
@@ -26,13 +62,14 @@ const App: React.FC = () => {
          }}
          >
              {/* values represent the events I want to occur */}
-             {({values, isSubmitting}) => (
+             {({values, errors, isSubmitting}) => (
             <Form>
-                <Field 
+                <MyTextField
                 placeholder="firstname"
                 name="firstName" 
-                type= "input" 
-                as={TextField} 
+                />
+                <Field 
+                
                 />
                 <div>
                 <Field 
@@ -43,6 +80,7 @@ const App: React.FC = () => {
                 />
                 </div>
                 <Field name="isTall" type="checkbox" as={Checkbox} />
+                
                 <div>cookies:</div>
                 <Field name="cookies" type="checkbox" value="chocolate chip" as={Checkbox} />
                 <Field name="cookies" type="checkbox" value="snickerdoodle" as={Checkbox} />
@@ -53,11 +91,49 @@ const App: React.FC = () => {
                 <MyRadio name="yogurt" type="radio" value="coconut" label= "coconut" />
                 <MyRadio name="yogurt" type="radio" value="blueberry" label= "blueberry" />
                 
+                <FieldArray name= "pets">
+                    {arrayHelpers => (
+                        <div>
+                            <Button
+                                onClick={() => 
+                                    arrayHelpers.push({
+                                        type: "frog",
+                                        name: "",
+                                        id: "" + Math.random()
+                                    })
+                                }
+                                >
+                                    add pet
+                            </Button>
+                            {values.pets.map((pet, index) => {
+                                return (
+                                <div key={pet.id}>
+                                    <MyTextField placeholder="pet name" name={`pets.${index}.name`} />
+                                    <Field 
+                                    name={`pets.${index}.type`}
+                                    type="select" 
+                                    as={Select}
+                                    >
 
+                                    <MenuItem value="cat">cat</MenuItem>
+                                    <MenuItem value="dog">dog</MenuItem>
+                                    <MenuItem value="frog">frog</MenuItem>
+                                    </Field>
+                                  </div> 
+                                ); 
+                                })}
+                        </div>
+                    )}
+                </FieldArray>
                 <div>
-                <Button disabled={isSubmitting} type="submit">submit</Button>
+                <Button disabled={isSubmitting} type="submit">
+                    submit
+                </Button>
                 </div>
+
                 <pre>{JSON.stringify(values, null, 2)}</pre>
+                <pre>{JSON.stringify(errors, null, 2)}</pre>
+
                 {/* This allows it to display as we input information */}
             </Form>
         )}
